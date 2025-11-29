@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>mthuyctevcl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+<style>
+        /* FIX LỖI KÉO XUỐN`G/ZOOM TRIỆT ĐỂ */
+        html, body {
+            margin: 0;
+            padding: 0; 
+            height: 100vh; 
+            width: 100%;
+            overflow: hidden !important; 
+            box-sizing: border-box; 
+            position: relative; 
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e002a 0%, #000000 100%); 
+            color: #00ff41; 
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+            user-select: none; 
+            touch-action: none; 
+        }
+        
+        /* Chữ nền chung - XANH LÁ (SẼ ĐƯỢC ĐỔI MÀU BẰNG JS/CLASS) */
+        .hacker-text-effect {
+            position: absolute; 
+            color: rgba(0, 255, 65, 0.3); /* Màu mặc định */
+            pointer-events: none; 
+            opacity: 0; 
+            text-shadow: 0 0 8px #00ff41; 
+            user-select: none; 
+            white-space: nowrap; 
+            z-index: 1; 
+            will-change: transform, opacity; 
+            transition: color 1s, text-shadow 1s; /* Thêm transition cho hiệu ứng đổi màu */
+        }
+        
+        /* CLASS MỚI: Màu hồng nhạt cho chữ lơ lửng */
+        .hacker-text-effect.pink-mode {
+            color: rgba(255, 204, 255, 0.5); /* FFCCFF */
+            text-shadow: 0 0 8px #FFCCFF;
+        }
+
+        /* TRÁI TIM LƠ LỬNG (ĐÃ ĐỔI SANG HỒNG NHẠT) */
+        .hacker-heart-effect {
+            position: absolute;
+            background-color: #FFCCFF; /* MÀU HỒNG NHẠT */
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1;
+            will-change: transform, opacity;
+            
+            box-shadow: 0 0 5px #FFCCFF, 0 0 10px #FFCCFF, 0 0 15px #FFCCFF; 
+            
+            width: var(--heart-base-size); 
+            height: var(--heart-base-size); 
+            
+            transform-origin: 50% 50%; 
+            transform: rotate(-45deg); 
+            
+            border-radius: var(--heart-border-radius) 0 var(--heart-border-radius) 0; 
+        }
+
+        .hacker-heart-effect::before, .hacker-heart-effect::after {
+            content: '';
+            position: absolute;
+            width: var(--heart-base-size);
+            height: var(--heart-base-size);
+            background-color: #FFCCFF; /* MÀU HỒNG NHẠT */
+            border-radius: 50%; 
+            box-shadow: inherit; 
+        }
+
+        .hacker-heart-effect::before { top: calc(var(--heart-base-size) / -2); left: 0; }
+        .hacker-heart-effect::after { left: calc(var(--heart-base-size) / -2); top: 0; }
+
+        /* RƠI XUỐN`G VÔ HẠN */
+        .falling-text, .falling-heart { 
+            animation: fallAndFade var(--animation-duration) infinite linear; 
+        }
+
+        /* Sticker mới rơi xuống (ĐÃ CHỈNH) */
+        .falling-new-sticker {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+            z-index: 50;
+            animation: fallAndFadeSticker var(--animation-duration) infinite linear; 
+        }
+
+        /* Keyframe riêng cho sticker để kiểm soát kích thước và độ trong suốt tốt hơn */
+        @keyframes fallAndFadeSticker {
+            0% { transform: translate(0, 0) scale(var(--sticker-scale, 1)); opacity: 0.2; } 
+            10% { opacity: 0.8; } 
+            90% { opacity: 0.8; } 
+            100% { transform: translate(0, 150vh) scale(var(--sticker-scale, 0.5)); opacity: 0; } 
+        }
+
+
+        @keyframes fallAndFade {
+            0% { transform: translate(0, 0) scale(var(--heart-scale, 1)); opacity: 0.2; } 
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; } 
+            100% { transform: translate(0, 150vh) scale(var(--heart-scale, 1)); opacity: 0; } 
+        }
+        
+        /* LƠ LỬNG VÔ HẠN */
+        .floating-text, .floating-heart { 
+            animation: floatForever var(--animation-duration) infinite ease-in-out alternate; 
+            opacity: 0.8; 
+        }
+
+        @keyframes floatForever {
+            0% { transform: translate(0, 0) rotate(0deg) scale(var(--heart-scale, 1)); }
+            50% { transform: translate(15vw, 15vh) rotate(8deg) scale(calc(var(--heart-scale, 1) * 1.1)); } 
+            100% { transform: translate(-15vw, -15vh) rotate(-8deg) scale(var(--heart-scale, 1)); }
+        }
+        
+        /* LỚP PHỦ CHỮ BAY MÀU HỒNG (QUỸ ĐẠO HÌNH TRÒN CHẠY) */
+        #flying-text-effect {
+            position: fixed;
+            top: 0; 
+            left: 50%;
+            font-size: 1.0em; 
+            font-weight: bold;
+            color: #FF00EA; 
+            text-shadow: 0 0 10px #FF00EA, 0 0 5px #ffccff;
+            opacity: 0;
+            z-index: 99;
+            pointer-events: none;
+            will-change: transform, opacity;
+            white-space: nowrap;
+            transform: translate(-50%, 0); 
+            display: flex; 
+            align-items: center;
+        }
+
+        /* Sticker nhỏ gọn */
+        #flying-text-effect .footer-gif {
+            width: 20px; 
+            height: 20px;
+            margin-left: 5px;
+            animation: stickerRotate 7s linear infinite; 
+            transform-origin: center;
+        }
+
+        .active-flying-effect {
+            animation: pinkTextFlyAndCircle 7s ease-out forwards; 
+        }
+        
+        /* Keyframe mới cho quỹ đạo hình tròn chạy từ trên xuống */
+        @keyframes pinkTextFlyAndCircle {
+            0% { 
+                transform: translate(-50%, 0) rotate(0deg) scale(0.8); 
+                opacity: 0; 
+            }
+            5% { 
+                opacity: 1; 
+            }
+            30% { 
+                transform: translate(10vw, 30vh) rotate(360deg) scale(1.0); 
+                opacity: 1; 
+            }
+            60% { 
+                transform: translate(-10vw, 60vh) rotate(720deg) scale(1.0); 
+                opacity: 1; 
+            }
+            90% { 
+                opacity: 0.5; 
+            }
+            100% { 
+                transform: translate(-50%, 120vh) rotate(720deg) scale(0.5); 
+                opacity: 0; 
+            }
+        }
+        
+        /* Keyframe cho sticker (đảm bảo nó xoay độc lập) */
+        @keyframes stickerRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ẢNH HIỆN RA SAU KHI MỞ HỘP QUÀ VÀ BAY ĐI */
+        #unwrapped-image {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            max-width: 80vw; 
+            max-height: 80vh;
+            border: 5px solid #ffccff; 
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.8);
+            display: none; 
+            z-index: 100;
+            object-fit: contain; 
+            will-change: transform, opacity;
+            transition: none; 
+        }
+        
+        /* Animation bay của ảnh (ĐÃ CHỈNH 5 GIÂY) */
+        .image-flying-out {
+            animation: imageFlyOut 5s ease-in forwards; /* 5s bay */
+        }
+
+        @keyframes imageFlyOut {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(50vw, 50vh) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(-50%, 150vh) scale(0.1); opacity: 0; } 
+        }
+
+        /* HỘP QUÀ CỦA ANH VINH - ĐẸP NHƯ ẢNH GỬI! */
+        #gift-box {
+            position: fixed;
+            width: 120px; 
+            height: 100px;
+            background-color: #F8BBD0; 
+            border: 1px solid #E91E63; 
+            border-radius: 8px;
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.4); 
+            z-index: 98; 
+            top: -150px; 
+            left: 50%;
+            transform: translateX(-50%);
+            animation: giftFall 1.5s ease-out forwards; 
+            background-image: linear-gradient(135deg, #F8BBD0 0%, #F48FB1 100%);
+            position: relative; 
+        }
+        
+        /* Nắp hộp quà */
+        #gift-box::before {
+            content: '';
+            position: absolute;
+            top: -15px; 
+            left: -1px;
+            width: 122px; 
+            height: 20px;
+            background-color: #E91E63; 
+            border: 1px solid #C2185B;
+            border-radius: 5px;
+            z-index: 2; 
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            background-image: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+        }
+
+        /* Ribbon dọc */
+        #gift-box::after {
+            content: '';
+            position: absolute;
+            width: 25px; 
+            height: 100%;
+            background-color: #FCE4EC; 
+            z-index: 3; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Ribbon ngang */
+        #gift-box .ribbon-h {
+            position: absolute;
+            width: 100%;
+            height: 25px; 
+            background-color: #FCE4EC; 
+            z-index: 3;
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Nơ (bow) giả lập bằng CSS */
+        #gift-box .bow-left, #gift-box .bow-right {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #FCE4EC; 
+            border-radius: 50% 50% 0 50%; 
+            transform: rotate(-45deg);
+            z-index: 4; 
+            top: calc(50% - 15px); 
+            left: calc(50% - 25px); 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+        }
+        #gift-box .bow-right {
+            transform: rotate(45deg);
+            left: calc(50% - 5px); 
+        }
+
+        /* Animation rơi thẳng */
+        @keyframes giftFall {
+            0% { top: -150px; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: calc(50% - 50px); opacity: 1; } 
+        }
+        
+        /* CSS cho lớp phủ chính (Đã fix lỗi hiển thị, nhỏ hơn, không viền) */
+        #click-to-play-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100vh; 
+            z-index: 9999; 
+            background: rgba(0,0,0,0.9); 
+            cursor: pointer;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box; 
+            padding: 10px; 
+        }
+        
+        #overlay-content {
+            text-align: center;
+            padding: 10px 15px; 
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 6px; 
+            border: none; 
+            animation: pulsePinkOverlay 1.5s infinite alternate; 
+            max-width: 250px; 
+            width: 85%; 
+            box-sizing: border-box;
+        }
+        
+        #overlay-text h1 {
+            color: #ff00ea; 
+            font-size: 1.1em; 
+            text-shadow: 0 0 6px #ff00ea; 
+            user-select: none;
+            margin: 0 0 4px 0; 
+            font-weight: bold; 
+            word-wrap: break-word; 
+            white-space: normal; 
+        }
+
+        #overlay-text p {
+            color: #00ff41;
+            font-size: 0.8em; 
+            margin: 4px 0 10px 0; 
+            font-weight: bold;
+            text-shadow: 0 0 2px #00ff41; 
+            word-wrap: break-word; 
+            white-space: normal; 
+        }
+
+        #overlay-text button {
+            background-color: #CC0000; 
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px; 
+            margin-top: 8px;
+            font-size: 0.8em; 
+            font-weight: bold; 
+            border-radius: 3px; 
+            cursor: pointer;
+            box-shadow: 0 0 4px #CC0000; 
+            transition: background-color 0.2s;
+        }
+        #overlay-text button:hover {
+            background-color: #ff0000;
+        }
+
+        @keyframes pulsePinkOverlay {
+            from { box-shadow: 0 0 4px #ffccff; } 
+            to { box-shadow: 0 0 10px #ffccff; } 
+        }
+
+    </style>
+</head>
+<body>
+    
+<div id="click-to-play-overlay">
+    <div id="overlay-content">
+        <div id="overlay-text">
+            <h1>Dành Riêng Cho Mthuy Code Độc Quyền🇻🇳</h1>
+            <p>chúc mt 26/11 vui vẻ 🗿</p>
+        </div>
+        <button id="ok-button" onclick="unlockMusic()">mt bấm vào đây nè</button>
+    </div>
+</div>
+
+<div id="flying-text-effect">
+    chúc mt 26/11 vui vẻ =)))
+    <img class="footer-gif" src="https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyN2pqdWliaXlreGFsOWViOHRqdHRlZ2oxZmVxd3ZxZmp1eHppMDNncSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/sh11BmCf8HY8F0c5GN/giphy.gif" alt="GIF Ếch Toilet">
+</div>
+
+<div id="gift-box" onclick="openGift()">
+    <div class="ribbon-h"></div> 
+    <div class="bow-left"></div>
+    <div class="bow-right"></div>
+</div>
+
+<img id="unwrapped-image" src="https://i.postimg.cc/prHY6Q2G/att-ho59jo-Re-GEMPg-WL58i-Gpc-BY7Bn5XNK2Hbt-F-k-WZeyg-M.jpg" alt="Ảnh Sau Khi Mở Hộp">
+
+
+<div style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; overflow: hidden;">
+    <iframe id="youtube-audio"
+        width="1" height="1" 
+        src="https://www.youtube.com/embed/8QrmJXOkBUk?enablejsapi=1&loop=1&playlist=8QrmJXOkBUk,WAw_8GjjF5M,qQDjCiyFIiY&controls=0&disablekb:1&iv_load_policy:3&modestbranding:1&rel:0&autoplay:1" 
+        frameborder="0" 
+        allow="autoplay; encrypted-media" 
+        allowfullscreen>
+    </iframe>
+</div>
+
+<script>
+    const NEW_STICKER_URL = 'https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyeWt6ZWNvdnd0NnVrNXV2NXp5cHhpYzlzZjdsNGRmZjg4bncwdWFydSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/oz45ELYgMoYVsZqmor/giphy.gif';
+    const UNWRAPPED_IMAGE_SRC = 'https://i.postimg.cc/prHY6Q2G/att-ho59jo-Re-GEMPg-WL58i-Gpc-BY7Bn5XNK2Hbt-F-k-WZeyg-M.jpg'; 
+    const ADDITIONAL_IMAGE_SRC = 'https://i.postimg.cc/3rCBVqzb/IMG-2787.jpg'; // Link ảnh mới
+
+    let stickerRainInterval;
+    let imageDropCounter = 0; // Để đếm và luân phiên ảnh rơi
+
+    function createNewFallingSticker(imageUrl = NEW_STICKER_URL, isImageReborn = false) {
+        const duration = 10 + Math.random() * 7; 
+        const initialLeft = -10 + Math.random() * 120; 
+        let size, scale;
+
+        if (isImageReborn) {
+            // Ảnh rơi (cũ và mới) sẽ có kích thước từ 70px đến 100px
+            size = 70 + Math.random() * 30; 
+            scale = 0.6 + Math.random() * 0.4; // Scale lớn hơn, bắt đầu 0.6-1.0
+        } else {
+            // Giữ nguyên kích thước nhỏ cho sticker GIF
+            size = 25 + Math.random() * 40; 
+            scale = 0.6 + Math.random() * 0.4; 
+        }
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.className = 'falling-new-sticker';
+        img.style.cssText = `
+            --animation-duration: ${duration}s;
+            left: ${initialLeft}vw;
+            width: ${size}px;
+            height: ${size}px;
+            --sticker-scale: ${scale}; 
+            animation-delay: ${Math.random() * 5}s; 
+            top: -10vh; 
+        `;
+
+        document.body.appendChild(img);
+
+        setTimeout(() => {
+            img.remove();
+        }, duration * 1000 + 100); 
+    }
+
+    function startNewStickerRain() {
+        // Tạo sticker GIF và ảnh rơi luân phiên ngay lập tức
+        let combinedDropInterval = setInterval(() => {
+            // Tạo sticker GIF
+            createNewFallingSticker(NEW_STICKER_URL, false); 
+
+            // Sau mỗi lần tạo sticker, kiểm tra để tạo ảnh rơi (cũ hoặc mới)
+            imageDropCounter++;
+            if (imageDropCounter % 2 === 0) { // Cứ 2 lần thì tạo 1 ảnh rơi
+                createNewFallingSticker(UNWRAPPED_IMAGE_SRC, true); 
+            } else {
+                createNewFallingSticker(ADDITIONAL_IMAGE_SRC, true);
+            }
+        }, 800); // Tạo sticker hoặc ảnh mỗi 0.8 giây để đều và nhiều hơn
+    }
+
+    let isMusicUnlocked = false; 
+
+    function unlockMusic() {
+        const overlay = document.getElementById('click-to-play-overlay');
+        const flyingTextEffect = document.getElementById('flying-text-effect');
+        
+        if (overlay) {
+            overlay.remove(); 
+        }
+
+        if (player && !isMusicUnlocked) {
+            player.playVideo();
+            playNextRandomMusic(true);
+            isMusicUnlocked = true;
+            
+            if (flyingTextEffect) { 
+                flyingTextEffect.classList.add('active-flying-effect');
+                
+                flyingTextEffect.addEventListener('animationend', () => {
+                    flyingTextEffect.remove(); 
+                    const giftBox = document.getElementById('gift-box');
+                    if (giftBox) {
+                        giftBox.style.display = 'block'; 
+                    }
+                }, { once: true });
+            }
+            
+            console.log("[WORM GPT - ANH VINH] Địt mẹ nhạc đã được mở khóa và hiệu ứng bay chữ hồng đã được kích hoạt!");
+        }
+    }
+
+    function openGift() {
+        const giftBox = document.getElementById('gift-box');
+        const unwrappedImage = document.getElementById('unwrapped-image');
+        
+        if (giftBox && unwrappedImage) {
+            giftBox.style.display = 'none'; 
+            unwrappedImage.style.display = 'block'; 
+
+            unwrappedImage.classList.add('image-flying-out');
+
+            unwrappedImage.addEventListener('animationend', () => {
+                unwrappedImage.remove(); 
+                
+                const hackerTexts = document.querySelectorAll('.hacker-text-effect');
+                hackerTexts.forEach(text => {
+                    text.classList.add('pink-mode');
+                });
+                
+                startNewStickerRain(); // BẮT ĐẦU MƯA STICKER VÀ ẢNH CÙNG LÚC
+
+                console.log("[WORM GPT - ANH VINH] Địt mẹ ảnh đã bay xong, đổi màu chữ nền thành HỒNG NHẠT và BẮT ĐẦU MƯA STICKER VÀ ẢNH ĐỀU ĐẶN!");
+            }, { once: true });
+        }
+    }
+
+</script>
+
+<script>
+    // CODE TẠO HIỆU ỨNG RƠI/BAY NỀN (ĐÃ CẬP NHẬT CHỮ MỚI - CHỮ THƯỜNG)
+    const hackerTextsContent = [
+        "mt bell", "mthuycte", "mtctevcl", 
+    ];
+
+    const numEffects = 300; 
+
+    for (let i = 0; i < numEffects; i++) { 
+        const isHeart = Math.random() < 0.3; 
+        const content = isHeart ? '' : hackerTextsContent[Math.floor(Math.random() * hackerTextsContent.length)]; 
+        
+        const delay = Math.random() * 15; 
+        const duration = 10 + Math.random() * 7; 
+        
+        const initialLeft = -10 + Math.random() * 120; 
+        const initialTop = -50 + Math.random() * 200; 
+        
+        const size = 0.6 + Math.random() * 0.6; 
+        const heartBaseSize = (2 + Math.random() * 6); 
+        const heartScale = (0.8 + Math.random() * 0.4); 
+
+        const div = document.createElement('div');
+        div.textContent = content;
+        div.style.cssText = `
+            animation-delay: ${delay}s;
+            --animation-duration: ${duration}s;
+            font-size: ${size}em;
+            left: ${initialLeft}vw;
+            top: ${initialTop}vh;
+            --heart-base-size: ${heartBaseSize}px;
+            --heart-border-radius: ${heartBaseSize / 2}px;
+            --heart-scale: ${heartScale};
+        `;
+
+        if (i % 2 === 0) { 
+            div.className = isHeart ? 'hacker-heart-effect falling-heart' : 'hacker-text-effect falling-text';
+        } else { 
+            div.className = isHeart ? 'hacker-heart-effect floating-heart' : 'hacker-text-effect floating-heart';
+        }
+
+        document.body.appendChild(div);
+    }
+</script>
+
+<script>
+    // CODE YOUTUBE API (ĐÃ CẬP NHẬT NHẠC)
+    let player;
+    let currentVideoId = '8QrmJXOkBUk'; 
+    const musicList = [ 
+        '8QrmJXOkBUk', 
+        'WAw_8GjjF5M', 
+        'qQDjCiyFIiY', 
+    ];
+    let currentMusicIndex = 0; 
+
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('youtube-audio', {
+            videoId: currentVideoId,
+            playerVars: {
+                'enablejsapi': 1,
+                'loop': 1,
+                'playlist': musicList.join(','), 
+                'controls': 0,
+                'disablekb': 1,
+                'iv_load_policy': 3,
+                'modestbranding': 1,
+                'rel': 0,
+                'autoplay': 1 
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        console.log("[WORM GPT - ANH VINH] Player đã sẵn sàng, chờ tương tác click cái lồn để mở khóa nhạc!");
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED) {
+            playNextRandomMusic(false); 
+        }
+    }
+
+    function playNextRandomMusic(isInitialStart) {
+        if (musicList.length === 0) return;
+
+        let newIndex;
+        if (isInitialStart) {
+            newIndex = 0; 
+        } else {
+            do {
+                newIndex = Math.floor(Math.random() * musicList.length);
+            } while (newIndex === currentMusicIndex); 
+        }
+
+        currentMusicIndex = newIndex;
+        currentVideoId = musicList[currentMusicIndex];
+        player.loadVideoById(currentVideoId); 
+        player.playVideo();
+        updateMusicInfo(currentVideoId);
+    }
+
+    function updateMusicInfo(videoId) {
+        return;
+    }
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+</script>
+
+</body>
+</html>
